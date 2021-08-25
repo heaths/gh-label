@@ -2,117 +2,38 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
-	"github.com/cli/cli/pkg/iostreams"
-	"github.com/cli/cli/utils"
 	"github.com/cli/safeexec"
 	"github.com/spf13/cobra"
 )
 
+type rootOptions struct {
+	owner string
+	repo  string
+}
+
 func main() {
+	opts := rootOptions{}
+
 	rootCmd := cobra.Command{
 		Use: "label",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			repoOverride, _ := cmd.Flags().GetString("repo")
+			return opts.parseRepoOverride(repoOverride)
+		},
 	}
-	rootCmd.AddCommand(listCmd())
+
+	rootCmd.PersistentFlags().StringP("repo", "R", "", "Select another repository using the `OWNER/REPO` format")
+
+	rootCmd.AddCommand(listCmd(&opts))
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
-}
-
-type listOptions struct {
-	limit uint
-}
-
-func listCmd() *cobra.Command {
-	opts := listOptions{}
-	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List labels for the repository",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return list(opts)
-		},
-	}
-
-	cmd.Flags().UintVarP(&opts.limit, "limit", "L", 30, "Maximum number of labels to fetch (default 30)")
-
-	return cmd
-}
-
-func list(opts listOptions) error {
-	io := iostreams.System()
-	cs := io.ColorScheme()
-
-	query := `query ($owner: String!, $repo: String!, $limit: Int) {
-		repository(name: $repo, owner: $owner) {
-			labels(first: $limit, orderBy: {field: NAME, direction: ASC}) {
-				nodes {
-					name
-					color
-					description
-				}
-			}
-		}
-	}`
-
-	args := []string{
-		"api",
-		"graphql",
-		"-F", "owner=:owner",
-		"-F", "repo=:repo",
-		"-F", fmt.Sprintf("limit=%d", opts.limit),
-		"-f", fmt.Sprintf("query=%s", query),
-	}
-
-	stdout, _, err := gh(args...)
-	if err != nil {
-		return fmt.Errorf("failed to list labels; error: %w", err)
-	}
-
-	type response struct {
-		Data struct {
-			Repository struct {
-				Labels struct {
-					Nodes []struct {
-						Name        string
-						Color       string
-						Description string
-					}
-				}
-			}
-		}
-	}
-
-	var resp response
-	if err = json.Unmarshal(stdout.Bytes(), &resp); err != nil {
-		return fmt.Errorf("failed to read label list; error: %w, stdout: %s", err, stdout.String())
-	}
-
-	colorizer := func(color string) func(string) string {
-		return func(s string) string {
-			return cs.HexToRGB(color, s)
-		}
-	}
-
-	printer := utils.NewTablePrinter(io)
-	for _, label := range resp.Data.Repository.Labels.Nodes {
-		color := label.Color
-		printer.AddField(label.Name, nil, colorizer(color))
-		if printer.IsTTY() {
-			color = "#" + color
-		}
-		printer.AddField(color, nil, nil)
-		printer.AddField(label.Description, nil, cs.ColorFromString("gray"))
-		printer.EndRow()
-	}
-
-	_ = printer.Render()
-
-	return nil
 }
 
 func gh(args ...string) (stdout, stderr bytes.Buffer, err error) {
@@ -132,5 +53,41 @@ func gh(args ...string) (stdout, stderr bytes.Buffer, err error) {
 		return
 	}
 
+	return
+}
+
+func (r *rootOptions) parseRepoOverride(repoOverride string) error {
+	if len(repoOverride) == 0 {
+		repoOverride = os.Getenv("GH_REPO")
+	}
+
+	if len(repoOverride) == 0 {
+		return nil
+	}
+
+	parts := strings.SplitN(repoOverride, "/", 2)
+
+	if len(parts) != 2 {
+		return fmt.Errorf(`expected the "OWNER/REPO" format, got %s`, repoOverride)
+	}
+
+	for _, part := range parts {
+		if part == "" {
+			return fmt.Errorf(`expected the "OWNER/REPO" format, got %s`, repoOverride)
+		}
+	}
+
+	r.owner = parts[0]
+	r.repo = parts[1]
+	return nil
+}
+
+func (r *rootOptions) repoOverride() (owner, repo string) {
+	if owner = r.owner; owner == "" {
+		owner = ":owner"
+	}
+	if repo = r.repo; repo == "" {
+		repo = ":repo"
+	}
 	return
 }

@@ -18,7 +18,7 @@ List label issues showing label colors when available.
 
 ```bash
 gh label list
-gh label list --limit 50
+gh label list service
 ```
 
 ## License
