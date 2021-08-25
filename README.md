@@ -14,7 +14,7 @@ gh extension install heaths/gh-label
 
 ### list
 
-List label issues showing label colors when available.
+List label issues showing label colors when available. You can optionally pass a substring to match in the label name or description.
 
 ```bash
 gh label list

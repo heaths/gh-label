@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -18,7 +19,7 @@ func listCmd(rootOpts *rootOptions) *cobra.Command {
 	opts := listOptions{}
 	cmd := &cobra.Command{
 		Use:   "list [label]",
-		Short: "List labels for the repository matching optional 'label' prefix",
+		Short: "List labels for the repository matching optional 'label' substring in the name or description",
 		Example: heredoc.Doc(`
 			$ gh label list
 			$ gh label list service
@@ -47,7 +48,7 @@ func list(rootOpts *rootOptions, opts listOptions) error {
 
 	query := `query ($owner: String!, $repo: String!, $label: String, $endCursor: String) {
 		repository(name: $repo, owner: $owner) {
-			labels(query: $label, orderBy: {field: NAME, direction: ASC}, first: 5, after: $endCursor) {
+			labels(query: $label, orderBy: {field: NAME, direction: ASC}, first: 100, after: $endCursor) {
 				nodes {
 					name
 					color
@@ -67,8 +68,6 @@ func list(rootOpts *rootOptions, opts listOptions) error {
 		"api",
 		"graphql",
 		"--paginate",
-		// Format as JSON array elements to work around https://github.com/cli/cli/issues/1268
-		"--template", `{{range .data.repository.labels.nodes}}{{printf "{\"name\":\"%s\",\"color\":\"%s\",\"description\":\"%s\"}," .name .color ""}}{{end}}`,
 		"-F", fmt.Sprintf("owner=%s", owner),
 		"-F", fmt.Sprintf("repo=%s", repo),
 		"-F", fmt.Sprintf("label=%s", opts.label),
@@ -80,21 +79,18 @@ func list(rootOpts *rootOptions, opts listOptions) error {
 		return fmt.Errorf("failed to list labels; error: %w", err)
 	}
 
-	// Delete the trailing comma from the formatted buffer and wrap as a JSON array.
-	buffer := stdout.Bytes()
-	buffer = append(append([]byte("["), buffer[:len(buffer)-1]...), []byte("]")...)
-
-	type label struct {
-		Name        string
-		Color       string
-		Description string
-	}
-
-	type labels []label
-
-	var resp labels
-	if err = json.Unmarshal(buffer, &resp); err != nil {
-		return fmt.Errorf("failed to read label list; error: %w, stdout: %s", err, stdout.String())
+	type response struct {
+		Data struct {
+			Repository struct {
+				Labels struct {
+					Nodes []struct {
+						Name        string
+						Color       string
+						Description string
+					}
+				}
+			}
+		}
 	}
 
 	colorizer := func(color string) func(string) string {
@@ -104,15 +100,29 @@ func list(rootOpts *rootOptions, opts listOptions) error {
 	}
 
 	printer := utils.NewTablePrinter(io)
-	for _, label := range resp {
-		color := label.Color
-		printer.AddField(label.Name, nil, colorizer(color))
-		if printer.IsTTY() {
-			color = "#" + color
+
+	// Work around https://github.com/cli/cli/issues/1268 by splitting responses after cursor info.
+	for _, data := range bytes.SplitAfter(stdout.Bytes(), []byte("}}}}}")) {
+		if len(data) == 0 {
+			break
 		}
-		printer.AddField(color, nil, nil)
-		printer.AddField(label.Description, nil, cs.ColorFromString("gray"))
-		printer.EndRow()
+
+		var resp response
+		if err = json.Unmarshal(data, &resp); err != nil {
+			return fmt.Errorf("failed to read labels; error: %w, data: %s", err, data)
+		}
+
+		for _, label := range resp.Data.Repository.Labels.Nodes {
+			color := label.Color
+			printer.AddField(label.Name, nil, colorizer(color))
+			if printer.IsTTY() {
+				color = "#" + color
+			}
+			printer.AddField(color, nil, nil)
+			printer.AddField(label.Description, nil, cs.ColorFromString("gray"))
+			printer.EndRow()
+		}
+
 	}
 
 	_ = printer.Render()
