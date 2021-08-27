@@ -1,4 +1,4 @@
-package main
+package list
 
 import (
 	"bytes"
@@ -8,15 +8,25 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/pkg/iostreams"
 	"github.com/cli/cli/utils"
+	"github.com/heaths/gh-label/internal/gh"
+	"github.com/heaths/gh-label/internal/options"
 	"github.com/spf13/cobra"
 )
 
 type listOptions struct {
 	label string
+
+	// For mocking only:
+	gh *gh.Gh
+	io *iostreams.IOStreams
 }
 
-func listCmd(rootOpts *rootOptions) *cobra.Command {
-	opts := listOptions{}
+func ListCmd(rootOpts *options.RootOptions) *cobra.Command {
+	opts := &listOptions{
+		gh: &gh.Gh{},
+		io: iostreams.System(),
+	}
+
 	cmd := &cobra.Command{
 		Use:   "list [label]",
 		Short: "List labels for the repository matching optional 'label' substring in the name or description",
@@ -42,10 +52,7 @@ func listCmd(rootOpts *rootOptions) *cobra.Command {
 	return cmd
 }
 
-func list(rootOpts *rootOptions, opts listOptions) error {
-	io := iostreams.System()
-	cs := io.ColorScheme()
-
+func list(rootOpts *options.RootOptions, opts *listOptions) error {
 	query := `query ($owner: String!, $repo: String!, $label: String, $endCursor: String) {
 		repository(name: $repo, owner: $owner) {
 			labels(query: $label, orderBy: {field: NAME, direction: ASC}, first: 100, after: $endCursor) {
@@ -62,7 +69,7 @@ func list(rootOpts *rootOptions, opts listOptions) error {
 		}
 	}`
 
-	owner, repo := rootOpts.repoOverride()
+	owner, repo := rootOpts.RepoOverride()
 
 	args := []string{
 		"api",
@@ -74,7 +81,7 @@ func list(rootOpts *rootOptions, opts listOptions) error {
 		"-f", fmt.Sprintf("query=%s", query),
 	}
 
-	stdout, _, err := gh(args...)
+	stdout, _, err := opts.gh.Run(args...)
 	if err != nil {
 		return fmt.Errorf("failed to list labels; error: %w", err)
 	}
@@ -92,6 +99,9 @@ func list(rootOpts *rootOptions, opts listOptions) error {
 			}
 		}
 	}
+
+	io := opts.io
+	cs := io.ColorScheme()
 
 	colorizer := func(color string) func(string) string {
 		return func(s string) string {
