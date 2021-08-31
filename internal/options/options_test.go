@@ -8,7 +8,7 @@ func Test_RepoOverride(t *testing.T) {
 		repo:  "gh-label",
 	}
 
-	if owner, repo := opts.RepoOverride(); owner != "heaths" || repo != "gh-label" {
+	if owner, repo := opts.Repo(); owner != "heaths" || repo != "gh-label" {
 		t.Errorf(`RepoOverride() = (%s, %s); want: ("heaths", "gh-label")`, owner, repo)
 	}
 }

@@ -13,10 +13,9 @@ func main() {
 		Use: "label",
 	}
 
-	opts := options.RootOptions{}
-	opts.Init(&rootCmd)
+	opts := options.New(&rootCmd)
 
-	rootCmd.AddCommand(list.ListCmd(&opts))
+	rootCmd.AddCommand(list.ListCmd(opts))
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

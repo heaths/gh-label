@@ -41,14 +41,9 @@ func ListCmd(rootOpts *options.RootOptions) *cobra.Command {
 			}
 			return list(rootOpts, opts)
 		},
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if cmd.Parent().PersistentPreRunE != nil {
-				return cmd.Parent().PersistentPreRunE(cmd, args)
-			}
-			return nil
-		},
 	}
 
+	rootOpts.ConfigureCommand(cmd)
 	return cmd
 }
 
@@ -69,7 +64,7 @@ func list(rootOpts *options.RootOptions, opts *listOptions) error {
 		}
 	}`
 
-	owner, repo := rootOpts.RepoOverride()
+	owner, repo := rootOpts.Repo()
 
 	args := []string{
 		"api",

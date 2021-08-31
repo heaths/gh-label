@@ -18,16 +18,28 @@ type RootOptions struct {
 	env   config
 }
 
-func (r *RootOptions) Init(cmd *cobra.Command) {
+func New(cmd *cobra.Command) *RootOptions {
+	r := &RootOptions{}
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		repoOverride, _ := cmd.Flags().GetString("repo")
 		return r.parseRepoOverride(repoOverride)
 	}
 
 	cmd.PersistentFlags().StringP("repo", "R", "", "Select another repository using the `OWNER/REPO` format")
+
+	return r
 }
 
-func (r *RootOptions) RepoOverride() (owner, repo string) {
+func (r *RootOptions) ConfigureCommand(cmd *cobra.Command) {
+	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		if cmd.Parent().PersistentPreRunE != nil {
+			return cmd.Parent().PersistentPreRunE(cmd, args)
+		}
+		return nil
+	}
+}
+
+func (r *RootOptions) Repo() (owner, repo string) {
 	return r.owner, r.repo
 }
 
