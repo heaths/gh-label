@@ -3,7 +3,7 @@ package options
 import "testing"
 
 func Test_RepoOverride(t *testing.T) {
-	opts := RootOptions{
+	opts := GlobalOptions{
 		owner: "heaths",
 		repo:  "gh-label",
 	}
@@ -74,8 +74,8 @@ func Test_parseRepoOverride(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			opts := RootOptions{
-				env: &mockConfig{
+			opts := GlobalOptions{
+				keys: &mockStore{
 					env: tt.args.env,
 				},
 			}
@@ -97,10 +97,10 @@ func Test_parseRepoOverride(t *testing.T) {
 	}
 }
 
-type mockConfig struct {
+type mockStore struct {
 	env map[string]string
 }
 
-func (c *mockConfig) get(key string) string {
-	return c.env[key]
+func (m *mockStore) get(key string) string {
+	return m.env[key]
 }

@@ -8,29 +8,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type config interface {
+type keyStore interface {
 	get(key string) string
 }
 
-type RootOptions struct {
+type GlobalOptions struct {
 	owner string
 	repo  string
-	env   config
+
+	// test
+	keys keyStore
 }
 
-func New(cmd *cobra.Command) *RootOptions {
-	r := &RootOptions{}
+func New(cmd *cobra.Command) *GlobalOptions {
+	opts := &GlobalOptions{}
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		repoOverride, _ := cmd.Flags().GetString("repo")
-		return r.parseRepoOverride(repoOverride)
+		return opts.parseRepoOverride(repoOverride)
 	}
 
 	cmd.PersistentFlags().StringP("repo", "R", "", "Select another repository using the `OWNER/REPO` format")
 
-	return r
+	return opts
 }
 
-func (r *RootOptions) ConfigureCommand(cmd *cobra.Command) {
+func (opts *GlobalOptions) ConfigureCommand(cmd *cobra.Command) {
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		if cmd.Parent().PersistentPreRunE != nil {
 			return cmd.Parent().PersistentPreRunE(cmd, args)
@@ -39,21 +41,21 @@ func (r *RootOptions) ConfigureCommand(cmd *cobra.Command) {
 	}
 }
 
-func (r *RootOptions) Repo() (owner, repo string) {
-	return r.owner, r.repo
+func (opts *GlobalOptions) Repo() (owner, repo string) {
+	return opts.owner, opts.repo
 }
 
-func (r *RootOptions) parseRepoOverride(repoOverride string) error {
+func (opts *GlobalOptions) parseRepoOverride(repoOverride string) error {
 	if len(repoOverride) == 0 {
-		if r.env == nil {
-			r.env = &envConfig{}
+		if opts.keys == nil {
+			opts.keys = &environment{}
 		}
-		repoOverride = r.env.get("GH_REPO")
+		repoOverride = opts.keys.get("GH_REPO")
 	}
 
 	if len(repoOverride) == 0 {
-		r.owner = ":owner"
-		r.repo = ":repo"
+		opts.owner = ":owner"
+		opts.repo = ":repo"
 		return nil
 	}
 
@@ -69,13 +71,13 @@ func (r *RootOptions) parseRepoOverride(repoOverride string) error {
 		}
 	}
 
-	r.owner = parts[0]
-	r.repo = parts[1]
+	opts.owner = parts[0]
+	opts.repo = parts[1]
 	return nil
 }
 
-type envConfig struct{}
+type environment struct{}
 
-func (c *envConfig) get(key string) string {
+func (env *environment) get(key string) string {
 	return os.Getenv(key)
 }

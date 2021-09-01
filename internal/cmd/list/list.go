@@ -1,14 +1,10 @@
 package list
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/pkg/iostreams"
 	"github.com/cli/cli/utils"
-	"github.com/heaths/gh-label/internal/gh"
+	"github.com/heaths/gh-label/internal/github"
 	"github.com/heaths/gh-label/internal/options"
 	"github.com/spf13/cobra"
 )
@@ -16,17 +12,13 @@ import (
 type listOptions struct {
 	label string
 
-	// For mocking only:
-	gh *gh.Gh
-	io *iostreams.IOStreams
+	// test
+	client *github.Client
+	io     *iostreams.IOStreams
 }
 
-func ListCmd(rootOpts *options.RootOptions) *cobra.Command {
-	opts := &listOptions{
-		gh: &gh.Gh{},
-		io: iostreams.System(),
-	}
-
+func ListCmd(globalOpts *options.GlobalOptions) *cobra.Command {
+	opts := &listOptions{}
 	cmd := &cobra.Command{
 		Use:   "list [label]",
 		Short: "List labels for the repository matching optional 'label' substring in the name or description",
@@ -39,60 +31,32 @@ func ListCmd(rootOpts *options.RootOptions) *cobra.Command {
 			if len(args) > 0 {
 				opts.label = args[0]
 			}
-			return list(rootOpts, opts)
+			return list(globalOpts, opts)
 		},
 	}
 
-	rootOpts.ConfigureCommand(cmd)
+	globalOpts.ConfigureCommand(cmd)
 	return cmd
 }
 
-func list(rootOpts *options.RootOptions, opts *listOptions) error {
-	query := `query ($owner: String!, $repo: String!, $label: String, $endCursor: String) {
-		repository(name: $repo, owner: $owner) {
-			labels(query: $label, orderBy: {field: NAME, direction: ASC}, first: 100, after: $endCursor) {
-				nodes {
-					name
-					color
-					description
-				}
-				pageInfo {
-					hasNextPage
-					endCursor
-				}
-			}
+func list(globalOpts *options.GlobalOptions, opts *listOptions) error {
+
+	if opts.client == nil {
+		owner, repo := globalOpts.Repo()
+		cli := &github.Cli{
+			Owner: owner,
+			Repo:  repo,
 		}
-	}`
-
-	owner, repo := rootOpts.Repo()
-
-	args := []string{
-		"api",
-		"graphql",
-		"--paginate",
-		"-F", fmt.Sprintf("owner=%s", owner),
-		"-F", fmt.Sprintf("repo=%s", repo),
-		"-F", fmt.Sprintf("label=%s", opts.label),
-		"-f", fmt.Sprintf("query=%s", query),
+		opts.client = github.New(cli)
 	}
 
-	stdout, _, err := opts.gh.Run(args...)
+	if opts.io == nil {
+		opts.io = iostreams.System()
+	}
+
+	labels, err := opts.client.ListLabels(opts.label)
 	if err != nil {
-		return fmt.Errorf("failed to list labels; error: %w", err)
-	}
-
-	type response struct {
-		Data struct {
-			Repository struct {
-				Labels struct {
-					Nodes []struct {
-						Name        string
-						Color       string
-						Description string
-					}
-				}
-			}
-		}
+		return err
 	}
 
 	io := opts.io
@@ -105,31 +69,16 @@ func list(rootOpts *options.RootOptions, opts *listOptions) error {
 	}
 
 	printer := utils.NewTablePrinter(io)
-
-	// Work around https://github.com/cli/cli/issues/1268 by splitting responses after cursor info.
-	for _, data := range bytes.SplitAfter(stdout.Bytes(), []byte("}}}}}")) {
-		if len(data) == 0 {
-			break
+	for _, label := range labels {
+		color := label.Color
+		printer.AddField(label.Name, nil, colorizer(color))
+		if printer.IsTTY() {
+			color = "#" + color
 		}
-
-		var resp response
-		if err = json.Unmarshal(data, &resp); err != nil {
-			return fmt.Errorf("failed to read labels; error: %w, data: %s", err, data)
-		}
-
-		for _, label := range resp.Data.Repository.Labels.Nodes {
-			color := label.Color
-			printer.AddField(label.Name, nil, colorizer(color))
-			if printer.IsTTY() {
-				color = "#" + color
-			}
-			printer.AddField(color, nil, nil)
-			printer.AddField(label.Description, nil, cs.ColorFromString("gray"))
-			printer.EndRow()
-		}
-
+		printer.AddField(color, nil, nil)
+		printer.AddField(label.Description, nil, cs.ColorFromString("gray"))
+		printer.EndRow()
 	}
-
 	_ = printer.Render()
 
 	return nil

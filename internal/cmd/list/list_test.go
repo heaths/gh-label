@@ -1,18 +1,18 @@
 package list
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/pkg/iostreams"
-	"github.com/heaths/gh-label/internal/gh"
+	"github.com/heaths/gh-label/internal/github"
 	"github.com/heaths/gh-label/internal/options"
 )
 
 func Test_list(t *testing.T) {
 	type args struct {
 		stdout string
-		stderr string
 		tty    bool
 	}
 
@@ -135,12 +135,14 @@ func Test_list(t *testing.T) {
 			io.SetColorEnabled(true)
 
 			// Set up gh output.
-			gh := gh.NewMock(tt.args.stdout, tt.args.stderr, nil)
+			mock := &github.Mock{
+				Stdout: *bytes.NewBufferString(tt.args.stdout),
+			}
 
-			rootOpts := &options.RootOptions{}
+			rootOpts := &options.GlobalOptions{}
 			opts := &listOptions{
-				io: io,
-				gh: gh,
+				client: github.New(mock),
+				io:     io,
 			}
 
 			if err := list(rootOpts, opts); (err != nil) != tt.wantE {
