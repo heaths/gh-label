@@ -10,6 +10,7 @@ type Label struct {
 	Name        string `json:"name"`
 	Color       string `json:"color"`
 	Description string `json:"description,omitempty"`
+	Url         string `json:"url,omitempty"`
 }
 
 type Labels []Label
@@ -19,7 +20,7 @@ type Client struct {
 }
 
 type LabelsService interface {
-	CreateOrUpdateLabel(label Label) error
+	CreateLabel(label Label) (bytes.Buffer, error)
 	ListLabels(substr string) (bytes.Buffer, error)
 	DeleteLabel(name string) error
 }
@@ -37,10 +38,24 @@ func New(labels LabelsService) *Client {
 	}
 }
 
+func (c *Client) CreateLabel(label Label) (Label, error) {
+	buf, err := c.labels.CreateLabel(label)
+	if err != nil {
+		return Label{}, err
+	}
+
+	label = Label{}
+	if err = json.Unmarshal(buf.Bytes(), &label); err != nil {
+		return Label{}, fmt.Errorf("failed to read label; error: %w, data: %s", err, buf.String())
+	}
+
+	return label, nil
+}
+
 func (c *Client) ListLabels(substr string) (Labels, error) {
 	buf, err := c.labels.ListLabels(substr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to deserialize labels, error: %w", err)
+		return nil, err
 	}
 
 	type response struct {
@@ -77,8 +92,8 @@ type Mock struct {
 	Err    error
 }
 
-func (m *Mock) CreateOrUpdateLabel(label Label) error {
-	return m.Err
+func (m *Mock) CreateLabel(label Label) (bytes.Buffer, error) {
+	return m.Stdout, m.Err
 }
 
 func (m *Mock) ListLabels(substr string) (bytes.Buffer, error) {

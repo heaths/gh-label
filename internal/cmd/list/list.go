@@ -1,6 +1,8 @@
 package list
 
 import (
+	"fmt"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/pkg/iostreams"
 	"github.com/cli/cli/utils"
@@ -28,6 +30,8 @@ func ListCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
+
 			if len(args) > 0 {
 				opts.label = args[0]
 			}
@@ -56,7 +60,7 @@ func list(globalOpts *options.GlobalOptions, opts *listOptions) error {
 
 	labels, err := opts.client.ListLabels(opts.label)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list labels; error: %w", err)
 	}
 
 	io := opts.io
@@ -66,6 +70,10 @@ func list(globalOpts *options.GlobalOptions, opts *listOptions) error {
 		return func(s string) string {
 			return cs.HexToRGB(color, s)
 		}
+	}
+
+	if io.IsStdoutTTY() {
+		fmt.Fprintf(io.Out, "Showing %d labels\n\n", len(labels))
 	}
 
 	printer := utils.NewTablePrinter(io)

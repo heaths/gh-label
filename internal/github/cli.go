@@ -13,8 +13,23 @@ type Cli struct {
 	Repo  string
 }
 
-func (cli *Cli) CreateOrUpdateLabel(label Label) error {
-	return fmt.Errorf("not implemented")
+func (cli *Cli) CreateLabel(label Label) (bytes.Buffer, error) {
+	args := []string{
+		"api",
+		"-F", fmt.Sprintf("owner=%s", cli.Owner),
+		"-F", fmt.Sprintf("repo=%s", cli.Repo),
+		"-F", fmt.Sprintf("name=%s", label.Name),
+		"-f", fmt.Sprintf("color=%s", label.Color),
+		"-F", fmt.Sprintf("description=%s", label.Description),
+		"/repos/:owner/:repo/labels",
+	}
+
+	stdout, _, err := run(args...)
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+
+	return stdout, nil
 }
 
 func (cli *Cli) ListLabels(substr string) (bytes.Buffer, error) {
@@ -46,7 +61,7 @@ func (cli *Cli) ListLabels(substr string) (bytes.Buffer, error) {
 
 	stdout, _, err := run(args...)
 	if err != nil {
-		return bytes.Buffer{}, fmt.Errorf("failed to list labels; error: %w", err)
+		return bytes.Buffer{}, err
 	}
 
 	return stdout, nil
@@ -59,7 +74,7 @@ func (cli *Cli) DeleteLabel(name string) error {
 func run(args ...string) (stdout, stderr bytes.Buffer, err error) {
 	bin, err := safeexec.LookPath("gh")
 	if err != nil {
-		err = fmt.Errorf("cannot find gh; is it installed? err: %w", err)
+		err = fmt.Errorf("cannot find gh; is it installed? error: %w", err)
 		return
 	}
 
@@ -69,7 +84,7 @@ func run(args ...string) (stdout, stderr bytes.Buffer, err error) {
 
 	err = cmd.Run()
 	if err != nil {
-		err = fmt.Errorf("failed to run gh; error: %w, stderr: %s", err, stderr.String())
+		err = fmt.Errorf("gh returned error: %w, stderr: %s", err, stderr.String())
 		return
 	}
 

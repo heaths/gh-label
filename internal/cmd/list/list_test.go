@@ -75,7 +75,9 @@ func Test_list(t *testing.T) {
 				}`,
 				tty: true,
 			},
-			wantW: heredoc.Docf(`bug            #d73a4a  %[1]s[0;90mSomething isn't working%[1]s[0m
+			wantW: heredoc.Docf(`Showing 2 labels
+			
+			bug            #d73a4a  %[1]s[0;90mSomething isn't working%[1]s[0m
 			documentation  #0075ca  %[1]s[0;90mImprovements or additions to documentation%[1]s[0m
 			`, "\x1b"),
 		},
@@ -131,7 +133,6 @@ func Test_list(t *testing.T) {
 			// Set up output streams.
 			io, _, stdout, _ := iostreams.Test()
 			io.SetStdoutTTY(tt.args.tty)
-			io.SetStderrTTY(tt.args.tty)
 			io.SetColorEnabled(true)
 
 			// Set up gh output.
