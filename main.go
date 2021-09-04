@@ -5,6 +5,7 @@ import (
 
 	"github.com/heaths/gh-label/internal/cmd/create"
 	"github.com/heaths/gh-label/internal/cmd/delete"
+	"github.com/heaths/gh-label/internal/cmd/edit"
 	"github.com/heaths/gh-label/internal/cmd/list"
 	"github.com/heaths/gh-label/internal/options"
 	"github.com/spf13/cobra"
@@ -21,6 +22,7 @@ func main() {
 	opts := options.New(&rootCmd)
 
 	rootCmd.AddCommand(create.CreateCmd(opts))
+	rootCmd.AddCommand(edit.EditCmd(opts))
 	rootCmd.AddCommand(delete.DeleteCmd(opts))
 	rootCmd.AddCommand(list.ListCmd(opts))
 

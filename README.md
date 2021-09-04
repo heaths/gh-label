@@ -12,9 +12,36 @@ gh extension install heaths/gh-label
 
 ## Commands
 
+### create
+
+Create a label in a repository.
+
+```bash
+gh label create feedback
+gh label create p1 --color e00808
+gh label create p2 --color "#ffa501" --description "Affects more than a few users"
+```
+
+### edit
+
+Edit a label in a repository.
+
+```bash
+gh label edit general --new-name feedback
+gh label edit feedback --color c046ff --description "User feedback"
+```
+
+### delete
+
+Delete a label from a repository.
+
+```bash
+gh label delete p1
+```
+
 ### list
 
-List label issues showing label colors when available. You can optionally pass a substring to match in the label name or description.
+List labels in a repository. You can optionally pass a substring to match in the label name or description.
 
 ```bash
 gh label list

@@ -22,7 +22,7 @@ func DeleteCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 	opts := &deleteOptions{}
 	cmd := &cobra.Command{
 		Use:   "delete <name>",
-		Short: "Delete a label from the repository",
+		Short: "Delete the label <name> from the repository",
 		Example: heredoc.Doc(`
 			$ gh label delete p1
 		`),

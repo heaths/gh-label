@@ -23,7 +23,7 @@ func ListCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 	opts := &listOptions{}
 	cmd := &cobra.Command{
 		Use:   "list [name]",
-		Short: "List labels for the repository matching optional 'name' substring in the label name or description",
+		Short: "List labels in the repository, optionally matching substring [name] in the label name or description",
 		Example: heredoc.Doc(`
 			$ gh label list
 			$ gh label list service

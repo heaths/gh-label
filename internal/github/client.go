@@ -13,6 +13,11 @@ type Label struct {
 	Url         string `json:"url,omitempty"`
 }
 
+type EditLabel struct {
+	Label
+	NewName string `json:"new_name,omitempty"`
+}
+
 type Labels []Label
 
 type Client struct {
@@ -21,8 +26,9 @@ type Client struct {
 
 type LabelsService interface {
 	CreateLabel(label Label) (bytes.Buffer, error)
-	ListLabels(substr string) (bytes.Buffer, error)
 	DeleteLabel(name string) error
+	ListLabels(substr string) (bytes.Buffer, error)
+	UpdateLabel(label EditLabel) (bytes.Buffer, error)
 }
 
 func New(labels LabelsService) *Client {
@@ -91,6 +97,20 @@ func (c *Client) ListLabels(substr string) (Labels, error) {
 	return labels, nil
 }
 
+func (c *Client) UpdateLabel(label EditLabel) (Label, error) {
+	buf, err := c.labels.UpdateLabel(label)
+	if err != nil {
+		return Label{}, err
+	}
+
+	updated := Label{}
+	if err = json.Unmarshal(buf.Bytes(), &updated); err != nil {
+		return Label{}, fmt.Errorf("failed to read label; error: %w, data: %s", err, buf.String())
+	}
+
+	return updated, nil
+}
+
 type Mock struct {
 	Stdout bytes.Buffer
 	Err    error
@@ -106,4 +126,8 @@ func (m *Mock) ListLabels(substr string) (bytes.Buffer, error) {
 
 func (m *Mock) DeleteLabel(name string) error {
 	return m.Err
+}
+
+func (m *Mock) UpdateLabel(label EditLabel) (bytes.Buffer, error) {
+	return m.Stdout, m.Err
 }

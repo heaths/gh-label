@@ -1,4 +1,4 @@
-package create
+package edit
 
 import (
 	"fmt"
@@ -12,25 +12,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type createOptions struct {
+type editOptions struct {
 	name        string
 	color       string
 	description string
+	newName     string
 
 	// test
 	client *github.Client
 	io     *iostreams.IOStreams
 }
 
-func CreateCmd(globalOpts *options.GlobalOptions) *cobra.Command {
-	opts := &createOptions{}
+func EditCmd(globalOpts *options.GlobalOptions) *cobra.Command {
+	opts := &editOptions{}
 	cmd := &cobra.Command{
-		Use:   "create <name>",
-		Short: "Create the label <name> in the repository",
+		Use:   "edit <name>",
+		Short: "Edit the label <name> in the repository",
 		Example: heredoc.Doc(`
-			$ gh label create feedback
-			$ gh label create p1 --color e00808
-			$ gh label create p2 --color "#ffa501" --description "Affects more than a few users"
+			$ gh label edit general --new-name feedback
+			$ gh label edit feedback --color c046ff --description "User feedback"
 		`),
 		Args: cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -48,17 +48,18 @@ func CreateCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.name = args[0]
 
-			return create(globalOpts, opts)
+			return edit(globalOpts, opts)
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.color, "color", "c", "", `The color of the label with or without "#" prefix. A random color will be assigned if not specified.`)
+	cmd.Flags().StringVarP(&opts.color, "color", "c", "", `The color of the label with or without "#" prefix.`)
 	cmd.Flags().StringVarP(&opts.description, "description", "d", "", "Description of the label.")
+	cmd.Flags().StringVarP(&opts.newName, "new-name", "", "", "Rename the label to the given new name.")
 
 	return cmd
 }
 
-func create(globalOpts *options.GlobalOptions, opts *createOptions) error {
+func edit(globalOpts *options.GlobalOptions, opts *editOptions) error {
 	if opts.client == nil {
 		owner, repo := globalOpts.Repo()
 		cli := &github.Cli{
@@ -72,32 +73,35 @@ func create(globalOpts *options.GlobalOptions, opts *createOptions) error {
 		opts.io = iostreams.System()
 	}
 
-	if opts.color == "" {
-		opts.color = utils.RandomColor()
+	label := github.EditLabel{
+		Label: github.Label{
+			Name:        opts.name,
+			Color:       opts.color,
+			Description: opts.description,
+		},
+		NewName: opts.newName,
 	}
 
-	label := github.Label{
-		Name:        opts.name,
-		Color:       opts.color,
-		Description: opts.description,
-	}
-
-	label, err := opts.client.CreateLabel(label)
+	updated, err := opts.client.UpdateLabel(label)
 	if err != nil {
 		return fmt.Errorf("failed to create label; error: %w", err)
 	}
 
 	re := regexp.MustCompile("^https://api.([^/]+)/repos/(.*)$")
-	matches := re.FindStringSubmatch(label.Url)
+	matches := re.FindStringSubmatch(updated.Url)
 
 	if opts.io.IsStdoutTTY() {
-		fmt.Fprintf(opts.io.Out, "Created label '%s'\n\n", label.Name)
+		if label.Name != updated.Name {
+			fmt.Fprintf(opts.io.Out, "Renamed label '%s' to '%s'\n\n", label.Name, updated.Name)
+		} else {
+			fmt.Fprintf(opts.io.Out, "Updated label '%s'\n\n", updated.Name)
+		}
 	}
 
 	if len(matches) == 3 {
 		fmt.Fprintf(opts.io.Out, "https://%s/%s\n", matches[1], matches[2])
 	} else {
-		fmt.Fprintln(opts.io.Out, label.Url)
+		fmt.Fprintln(opts.io.Out, updated.Url)
 	}
 
 	return nil
