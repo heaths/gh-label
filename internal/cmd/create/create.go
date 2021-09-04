@@ -25,12 +25,13 @@ type createOptions struct {
 func CreateCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 	opts := &createOptions{}
 	cmd := &cobra.Command{
-		Use:   "create",
+		Use:   "create <name>",
 		Short: "Create a label for the repository",
 		Example: heredoc.Doc(`
-			$ gh label create --name p1 --color e00808
-			$ gh label create --name p2 --color "#ffa501" --description "Affects more than a few users"
+			$ gh label create p1 --color e00808
+			$ gh label create p2 --color "#ffa501" --description "Affects more than a few users"
 		`),
+		Args: cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if color, err := utils.ColorE(opts.color); err != nil {
 				return fmt.Errorf(`invalid flag "color": %s`, err)
@@ -40,20 +41,17 @@ func CreateCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 			}
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
+			opts.name = args[0]
 
 			return create(globalOpts, opts)
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.name, "name", "n", "", "The name of the label")
 	cmd.Flags().StringVarP(&opts.color, "color", "c", "", "The color of the label with or without \"#\" prefix")
 	cmd.Flags().StringVarP(&opts.description, "description", "d", "", "Optional description of the label")
 
-	cmd.MarkFlagRequired("name")
 	cmd.MarkFlagRequired("color")
 
-	globalOpts.ConfigureCommand(cmd)
 	return cmd
 }
 
@@ -86,7 +84,7 @@ func create(globalOpts *options.GlobalOptions, opts *createOptions) error {
 	matches := re.FindStringSubmatch(label.Url)
 
 	if opts.io.IsStdoutTTY() {
-		fmt.Fprint(opts.io.Out, "Created label\n\n")
+		fmt.Fprintf(opts.io.Out, "Created label '%s'\n\n", label.Name)
 	}
 
 	if len(matches) == 3 {

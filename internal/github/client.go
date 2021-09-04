@@ -52,6 +52,10 @@ func (c *Client) CreateLabel(label Label) (Label, error) {
 	return label, nil
 }
 
+func (c *Client) DeleteLabel(name string) error {
+	return c.labels.DeleteLabel(name)
+}
+
 func (c *Client) ListLabels(substr string) (Labels, error) {
 	buf, err := c.labels.ListLabels(substr)
 	if err != nil {

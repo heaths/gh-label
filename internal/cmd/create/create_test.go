@@ -23,7 +23,7 @@ func Test_create(t *testing.T) {
 		{
 			name: "create (TTY)",
 			tty:  true,
-			want: heredoc.Doc(`Created label
+			want: heredoc.Doc(`Created label 'test'
 			
 			https://github.com/heaths/gh-label/labels/test
 			`),

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/cli/safeexec"
 )
@@ -15,7 +16,6 @@ type Cli struct {
 
 func (cli *Cli) CreateLabel(label Label) (bytes.Buffer, error) {
 	args := []string{
-		"api",
 		"-F", fmt.Sprintf("owner=%s", cli.Owner),
 		"-F", fmt.Sprintf("repo=%s", cli.Repo),
 		"-F", fmt.Sprintf("name=%s", label.Name),
@@ -50,7 +50,6 @@ func (cli *Cli) ListLabels(substr string) (bytes.Buffer, error) {
 	}`
 
 	args := []string{
-		"api",
 		"graphql",
 		"--paginate",
 		"-F", fmt.Sprintf("owner=%s", cli.Owner),
@@ -68,7 +67,15 @@ func (cli *Cli) ListLabels(substr string) (bytes.Buffer, error) {
 }
 
 func (cli *Cli) DeleteLabel(name string) error {
-	return fmt.Errorf("not implemented")
+	args := []string{
+		"-X", "DELETE",
+		"-F", fmt.Sprintf("owner=%s", cli.Owner),
+		"-F", fmt.Sprintf("repo=%s", cli.Repo),
+		fmt.Sprintf("/repos/:owner/:repo/labels/%s", name),
+	}
+
+	_, _, err := run(args...)
+	return err
 }
 
 func run(args ...string) (stdout, stderr bytes.Buffer, err error) {
@@ -77,6 +84,11 @@ func run(args ...string) (stdout, stderr bytes.Buffer, err error) {
 		err = fmt.Errorf("cannot find gh; is it installed? error: %w", err)
 		return
 	}
+
+	// Always prepend arguments passed to every command.
+	args = append([]string{"api", "-H", "accept:application/vnd.github.v3+json"}, args...)
+
+	fmt.Println("Running: ", strings.Join(args, " "))
 
 	cmd := exec.Command(bin, args...)
 	cmd.Stdout = &stdout

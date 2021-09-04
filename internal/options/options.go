@@ -23,6 +23,8 @@ type GlobalOptions struct {
 func New(cmd *cobra.Command) *GlobalOptions {
 	opts := &GlobalOptions{}
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
+
 		repoOverride, _ := cmd.Flags().GetString("repo")
 		return opts.parseRepoOverride(repoOverride)
 	}
@@ -30,15 +32,6 @@ func New(cmd *cobra.Command) *GlobalOptions {
 	cmd.PersistentFlags().StringP("repo", "R", "", "Select another repository using the `OWNER/REPO` format")
 
 	return opts
-}
-
-func (opts *GlobalOptions) ConfigureCommand(cmd *cobra.Command) {
-	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		if cmd.Parent().PersistentPreRunE != nil {
-			return cmd.Parent().PersistentPreRunE(cmd, args)
-		}
-		return nil
-	}
 }
 
 func (opts *GlobalOptions) Repo() (owner, repo string) {
