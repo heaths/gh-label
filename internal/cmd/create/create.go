@@ -28,17 +28,22 @@ func CreateCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 		Use:   "create <name>",
 		Short: "Create a label for the repository",
 		Example: heredoc.Doc(`
+			$ gh label create feedback
 			$ gh label create p1 --color e00808
 			$ gh label create p2 --color "#ffa501" --description "Affects more than a few users"
 		`),
 		Args: cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if color, err := utils.ColorE(opts.color); err != nil {
-				return fmt.Errorf(`invalid flag "color": %s`, err)
-			} else {
-				opts.color = color
-				return nil
+			if opts.color != "" {
+				if color, err := utils.ValidateColor(opts.color); err != nil {
+					return fmt.Errorf(`invalid flag "color": %s`, err)
+				} else {
+					// Set color without "#" prefix.
+					opts.color = color
+				}
 			}
+
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.name = args[0]
@@ -47,10 +52,8 @@ func CreateCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.color, "color", "c", "", "The color of the label with or without \"#\" prefix")
+	cmd.Flags().StringVarP(&opts.color, "color", "c", "", "The color of the label with or without \"#\" prefix. A random color will be assigned if not specified.")
 	cmd.Flags().StringVarP(&opts.description, "description", "d", "", "Optional description of the label")
-
-	cmd.MarkFlagRequired("color")
 
 	return cmd
 }
@@ -67,6 +70,10 @@ func create(globalOpts *options.GlobalOptions, opts *createOptions) error {
 
 	if opts.io == nil {
 		opts.io = iostreams.System()
+	}
+
+	if opts.color == "" {
+		opts.color = utils.RandomColor()
 	}
 
 	label := github.Label{

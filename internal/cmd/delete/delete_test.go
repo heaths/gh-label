@@ -60,7 +60,7 @@ func Test_delete_error(t *testing.T) {
 		}
 
 		if err := delete(rootOpts, opts); err == nil {
-			t.Errorf("create() error = nil, expected error")
+			t.Error("create() error = nil, expected error")
 			return
 		}
 	})

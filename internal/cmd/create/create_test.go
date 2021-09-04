@@ -2,6 +2,7 @@ package create
 
 import (
 	"bytes"
+	"regexp"
 	"testing"
 
 	"github.com/MakeNowJust/heredoc"
@@ -69,4 +70,44 @@ func Test_create(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_create_randomColor(t *testing.T) {
+	t.Run("create with random color (TTY)", func(t *testing.T) {
+		// Set up output streams.
+		io, _, _, _ := iostreams.Test()
+		io.SetStdoutTTY(true)
+		io.SetColorEnabled(true)
+
+		// Set up gh output.
+		mock := &github.Mock{
+			Stdout: *bytes.NewBufferString(heredoc.Doc(`{
+					"id": 3315930645,
+					"node_id": "MDU6TGFiZWwzMzE1OTMwNjQ1",
+					"url": "https://api.github.com/repos/heaths/gh-label/labels/test",
+					"name": "test",
+					"color": "112233",
+					"default": false,
+					"description": ""
+			}`)),
+		}
+
+		rootOpts := &options.GlobalOptions{}
+		opts := &createOptions{
+			name: "test",
+
+			client: github.New(mock),
+			io:     io,
+		}
+
+		if err := create(rootOpts, opts); err != nil {
+			t.Errorf("create() error = %v", err)
+			return
+		}
+
+		re := regexp.MustCompile("^[A-Z0-9]{6}$")
+		if !re.MatchString(opts.color) {
+			t.Errorf("expected random color pattern: %s, got color: %s", re.String(), opts.color)
+		}
+	})
 }

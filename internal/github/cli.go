@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
-	"strings"
 
 	"github.com/cli/safeexec"
 )
@@ -87,8 +86,6 @@ func run(args ...string) (stdout, stderr bytes.Buffer, err error) {
 
 	// Always prepend arguments passed to every command.
 	args = append([]string{"api", "-H", "accept:application/vnd.github.v3+json"}, args...)
-
-	fmt.Println("Running: ", strings.Join(args, " "))
 
 	cmd := exec.Command(bin, args...)
 	cmd.Stdout = &stdout
