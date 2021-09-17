@@ -1,44 +1,63 @@
 #!/bin/bash
 
-# Based on https://github.com/vilmibm/gh-user-status/blob/cead3abf46ffb5fd3c178a0ba6f2c69c3dbabf7e/gh-user-status
+# Based on https://github.com/vilmibm/gh-user-status/blob/533285348c0354064d79053da39aa75f17b5c55f/gh-user-status
 
 set -e
 
+# Get the latest tag from the remote (none local if in a shallow clone).
+repo=heaths/gh-label
+tag="$(git ls-remote --exit-code --sort=-v:refname --tags https://github.com/${repo}.git | sed -E 's/^[[:xdigit:]]+[[:space:]]+refs\/tags\/(.+)/\1/;q')"
+
 extensionPath="$(dirname "$0")"
 arch="$(uname -m)"
-
+exec=""
 
 if uname -a | grep Msys > /dev/null; then
   if [ $arch = "x86_64" ]; then
-    exec "${extensionPath}/builds/windows-x86_64" "$@"
+    exe="windows-x86_64"
   elif [ $arch = "i686" ]; then
-    exec "${extensionPath}/builds/windows-i386" "$@"
+    exe="windows-i386"
   elif [ $arch = "i386" ]; then
-    exec "${extensionPath}/builds/windows-i386" "$@"
+    exe="windows-i386"
   fi
 elif uname -a | grep Darwin > /dev/null; then
   if [ $arch = "x86_64" ]; then
-    exec "${extensionPath}/builds/darwin-x86_64" "$@"
+    exe="darwin-x86_64"
   fi
 elif uname -a | grep Linux > /dev/null; then
   if [ $arch = "x86_64" ]; then
-    exec "${extensionPath}/builds/linux-x86_64" "$@"
+    exe="linux-x86_64"
   elif [ $arch = "i686" ]; then
-    exec "${extensionPath}/builds/linux-i386" "$@"
+    exe="linux-i386"
   elif [ $arch = "i386" ]; then
-    exec "${extensionPath}/builds/linux-i386" "$@"
+    exe="linux-i386"
   fi
 fi
 
-if [ "$(which go)" = "" ]; then 
-	echo "go must be installed to use this gh extension on this platform"
-	exit 1
+if [ "${exe}" == "" ]; then
+  if [ "$(which go)" == "" ]; then
+    echo "Go must be installed to use this gh extension on this platform: https://golang.org"
+    exit 1
+  fi
+
+  exe="cmd.out"
+
+  if [[ ! -x "${extensionPath}/bin/${exe}" ]]; then
+    mkdir -p "${extensionPath}/bin"
+
+    pushd "${extensionPath}" > /dev/null
+    go build -o "bin/${exe}"
+    popd > /dev/null
+  fi
+else
+  if [[ ! -x "${extensionPath}/bin/${exe}" ]]; then
+    mkdir -p "${extensionPath}/bin"
+    rm -f "${extensionPath}/bin/*"
+
+    echo "Downloading ${exe} from https://github.com/${repo}/releases/tag/${tag}"
+    gh release -R "${repo}" download "${tag}" -p "${exe}" --dir="${extensionPath}/bin"
+    chmod +x "${extensionPath}/bin/${exe}"
+  fi
 fi
 
-exe="cmd.out"
-
-cd "${extensionPath}" > /dev/null
-go build -o "${exe}"
-cd - > /dev/null
-
-exec "${extensionPath}/${exe}" "$@"
+exec "${extensionPath}/bin/${exe}" "$@"
