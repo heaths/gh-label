@@ -41,7 +41,6 @@ func ListCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 }
 
 func list(globalOpts *options.GlobalOptions, opts *listOptions) error {
-
 	if opts.client == nil {
 		owner, repo := globalOpts.Repo()
 		cli := &github.Cli{

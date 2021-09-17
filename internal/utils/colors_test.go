@@ -17,6 +17,7 @@ func Test_RandomColor(t *testing.T) {
 	})
 }
 
+// cSpell:ignore aabbzz
 func Test_ValidateColor(t *testing.T) {
 	tests := []struct {
 		name  string

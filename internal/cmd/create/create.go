@@ -88,7 +88,7 @@ func create(globalOpts *options.GlobalOptions, opts *createOptions) error {
 	}
 
 	re := regexp.MustCompile("^https://api.([^/]+)/repos/(.*)$")
-	matches := re.FindStringSubmatch(label.Url)
+	matches := re.FindStringSubmatch(label.URL)
 
 	if opts.io.IsStdoutTTY() {
 		fmt.Fprintf(opts.io.Out, "Created label '%s'\n\n", label.Name)
@@ -97,7 +97,7 @@ func create(globalOpts *options.GlobalOptions, opts *createOptions) error {
 	if len(matches) == 3 {
 		fmt.Fprintf(opts.io.Out, "https://%s/%s\n", matches[1], matches[2])
 	} else {
-		fmt.Fprintln(opts.io.Out, label.Url)
+		fmt.Fprintln(opts.io.Out, label.URL)
 	}
 
 	return nil
