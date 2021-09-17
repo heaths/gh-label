@@ -4,9 +4,9 @@
 
 set -e
 
-# Get the latest tag from the remote (none local if in a shallow clone).
+# Get the most recent tag, or a commit if no tags availble e.g. within a shallow clone.
 repo=heaths/gh-label
-tag="$(git ls-remote --exit-code --sort=-v:refname --tags https://github.com/${repo}.git | sed -E 's/^[[:xdigit:]]+[[:space:]]+refs\/tags\/(.+)/\1/;q')"
+tag="$(git describe --abbrev=0 --always --tags)"
 
 extensionPath="$(dirname "$0")"
 arch="$(uname -m)"
@@ -40,24 +40,26 @@ if [ "${exe}" == "" ]; then
     exit 1
   fi
 
-  exe="cmd.out"
+  pushd "${extensionPath}" > /dev/null
+  go run . "$@"
+  popd > /dev/null
 
-  if [[ ! -x "${extensionPath}/bin/${exe}" ]]; then
-    mkdir -p "${extensionPath}/bin"
-
-    pushd "${extensionPath}" > /dev/null
-    go build -o "bin/${exe}"
-    popd > /dev/null
-  fi
-else
-  if [[ ! -x "${extensionPath}/bin/${exe}" ]]; then
-    mkdir -p "${extensionPath}/bin"
-    rm -f "${extensionPath}/bin/*"
-
-    echo "Downloading ${exe} from https://github.com/${repo}/releases/tag/${tag}"
-    gh release -R "${repo}" download "${tag}" -p "${exe}" --dir="${extensionPath}/bin"
-    chmod +x "${extensionPath}/bin/${exe}"
-  fi
+  exit
 fi
 
-exec "${extensionPath}/bin/${exe}" "$@"
+if [[ ! -x "${extensionPath}/bin/${tag}/${exe}" ]]; then
+  rm -rf "${extensionPath}"/bin/*
+
+  if [[ $tag =~ ^v[0-9\.]+ ]]; then
+    >&2 echo "Downloading ${exe} from https://github.com/${repo}/releases/tag/${tag}"
+    gh release -R "${repo}" download "${tag}" -p "${exe}" --dir="${extensionPath}/bin/${tag}"
+  else
+    # Fall back to latest executable since no tag was available.
+    >&2 echo "Downloading latest executable from https://github.com/${repo}/releases/latest"
+    gh release -R "${repo}" download -p "${exe}" --dir="${extensionPath}/bin/${tag}"
+  fi
+
+  chmod +x "${extensionPath}/bin/${tag}/${exe}"
+fi
+
+exec "${extensionPath}/bin/${tag}/${exe}" "$@"
