@@ -1,5 +1,7 @@
 package list
 
+// cSpell:ignoreRegExp /[0-9A-Fa-f]{6}/
+
 import (
 	"bytes"
 	"testing"
@@ -76,7 +78,7 @@ func Test_list(t *testing.T) {
 				tty: true,
 			},
 			wantW: heredoc.Docf(`Showing 2 labels
-			
+
 			bug            #d73a4a  %[1]s[0;90mSomething isn't working%[1]s[0m
 			documentation  #0075ca  %[1]s[0;90mImprovements or additions to documentation%[1]s[0m
 			`, "\x1b"),

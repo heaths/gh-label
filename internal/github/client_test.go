@@ -151,6 +151,7 @@ func Test_ListLabels(t *testing.T) {
 				},
 			},
 		},
+		// cSpell:ignore efgh5678
 		{
 			name: "success with multiple pages",
 			stdout: *bytes.NewBufferString(heredoc.Doc(`{

@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  GOVERSION: 1.17
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: windows-latest
+          goos: windows
+          lint: true
+        - os: ubuntu-latest
+          goos: linux
+          lint: true
+        - os: macos-latest
+          goos: darwin
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: install go ${{ env.GOVERSION }}
+      uses: actions/setup-go@v2.1.4
+      with:
+        go-version: '^${{ env.GOVERSION }}'
+    - name: test
+      run: GOOS=${{ matrix.goos }} go test ./... -cover -v
+    - name: lint
+      if: ${{ !cancelled() && matrix.lint }}
+      uses: golangci/golangci-lint-action@v2.5.2
+      with:
+        only-new-issues: true
+        skip-go-installation: true
+
+  check:
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() }}
+    needs:
+    - test
+    steps:
+    - name: check
+      run: |
+        if [[ "${{ needs.test.result }}" == "success" ]]; then
+          echo -e "\e[32mSuccess\e[0m"
+        else
+          echo -e "\e[31mFailed\e[0m"
+          exit 1
+        fi

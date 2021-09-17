@@ -1,0 +1,26 @@
+{
+    "version": "0.2",
+    "language": "en",
+    "words": [
+        "deserialization",
+        "docf",
+        "iostreams",
+        "nolint",
+        "vilmibm"
+    ],
+    "overrides": [
+        {
+            "filename": "**/.github/**/{*.yml,*.yaml}",
+            "words": [
+                "golangci",
+                "goversion"
+            ]
+        },
+        {
+            "filename": "**/*.md",
+            "dictionaries": [
+                "golang"
+            ]
+        }
+    ]
+}

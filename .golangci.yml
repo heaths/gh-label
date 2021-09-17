@@ -1,0 +1,14 @@
+# cSpell:disable
+
+linters:
+  enable:
+  - godot
+  - gofmt
+  - nilerr
+  - stylecheck
+  - whitespace
+
+linters-settings:
+  godot:
+    exclude:
+    - cSpell

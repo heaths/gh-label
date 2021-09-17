@@ -88,7 +88,7 @@ func edit(globalOpts *options.GlobalOptions, opts *editOptions) error {
 	}
 
 	re := regexp.MustCompile("^https://api.([^/]+)/repos/(.*)$")
-	matches := re.FindStringSubmatch(updated.Url)
+	matches := re.FindStringSubmatch(updated.URL)
 
 	if opts.io.IsStdoutTTY() {
 		if label.Name != updated.Name {
@@ -101,7 +101,7 @@ func edit(globalOpts *options.GlobalOptions, opts *editOptions) error {
 	if len(matches) == 3 {
 		fmt.Fprintf(opts.io.Out, "https://%s/%s\n", matches[1], matches[2])
 	} else {
-		fmt.Fprintln(opts.io.Out, updated.Url)
+		fmt.Fprintln(opts.io.Out, updated.URL)
 	}
 
 	return nil
