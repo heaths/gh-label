@@ -4,11 +4,12 @@
 
 set -e
 
+extensionPath="$(dirname "$0")"
+
 # Get the most recent tag, or a commit if no tags availble e.g. within a shallow clone.
 repo=heaths/gh-label
-tag="$(git describe --abbrev=0 --always --tags)"
+tag="$(git --git-dir="${extensionPath}/.git" describe --abbrev=0 --always --tags)"
 
-extensionPath="$(dirname "$0")"
 arch="$(uname -m)"
 exec=""
 
