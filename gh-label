@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Based on https://github.com/vilmibm/gh-user-status/blob/533285348c0354064d79053da39aa75f17b5c55f/gh-user-status
 
