@@ -11,7 +11,8 @@ defaults:
     shell: bash
 
 env:
-  GOVERSION: 1.17
+  # TODO: Update once cli/gh-extension-precompile#5 is resolved.
+  GOVERSION: 1.16
 
 jobs:
   test:
