@@ -12,7 +12,7 @@ defaults:
 
 env:
   # TODO: Update once cli/gh-extension-precompile#5 is resolved.
-  GOVERSION: 1.16
+  GOVERSION: '1.16'
 
 jobs:
   test:
@@ -35,7 +35,7 @@ jobs:
     - name: install go ${{ env.GOVERSION }}
       uses: actions/setup-go@v2.1.4
       with:
-        go-version: '^${{ env.GOVERSION }}'
+        go-version: ${{ env.GOVERSION }}
     - name: test
       run: GOOS=${{ matrix.goos }} go test ./... -cover -v
     - name: lint
