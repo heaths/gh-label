@@ -14,7 +14,7 @@ env:
 
 jobs:
   publish:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
     - name: checkout
       uses: actions/checkout@v2
@@ -24,16 +24,5 @@ jobs:
         go-version: '^${{ env.GOVERSION }}'
     - name: test
       run: go test ./...
-    - name: build
-      run: |
-        mkdir -p bin
-        GOOS=darwin  GOARCH=amd64 go build -o bin/darwin-x86_64
-        GOOS=linux   GOARCH=386   go build -o bin/linux-i386
-        GOOS=linux   GOARCH=amd64 go build -o bin/linux-x86_64
-        GOOS=windows GOARCH=386   go build -o bin/windows-i386
-        GOOS=windows GOARCH=amd64 go build -o bin/windows-x86_64
-
     - name: publish
-      run: gh release upload ${GITHUB_REF#refs/tags/} ./bin/* --clobber
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: cli/gh-extension-precompile@v1
