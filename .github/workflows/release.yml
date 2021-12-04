@@ -1,17 +1,19 @@
 name: release
 
 on:
-  release:
-    types:
-    - published
+  push:
+    tags:
+    - 'v*'
+
+permissions:
+  contents: write
 
 defaults:
   run:
     shell: bash
 
 env:
-  # TODO: Update once cli/gh-extension-precompile#5 is resolved.
-  GOVERSION: '1.16'
+  GOVERSION: '1.17'
 
 jobs:
   publish:
@@ -27,3 +29,5 @@ jobs:
       run: go test ./...
     - name: publish
       uses: cli/gh-extension-precompile@v1
+      with:
+        go_version: ${{ env.GOVERSION }}
