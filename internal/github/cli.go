@@ -15,7 +15,7 @@ type Cli struct {
 
 func (cli *Cli) CreateLabel(label Label) (bytes.Buffer, error) {
 	args := []string{
-		"/repos/:owner/:repo/labels",
+		"/repos/{owner}/{repo}/labels",
 		"-X", "POST",
 		"-F", fmt.Sprintf("owner=%s", cli.Owner),
 		"-F", fmt.Sprintf("repo=%s", cli.Repo),
@@ -71,7 +71,7 @@ func (cli *Cli) ListLabels(substr string) (bytes.Buffer, error) {
 
 func (cli *Cli) DeleteLabel(name string) error {
 	args := []string{
-		fmt.Sprintf("/repos/:owner/:repo/labels/%s", name),
+		fmt.Sprintf("/repos/{owner}/{repo}/labels/%s", name),
 		"-X", "DELETE",
 		"-F", fmt.Sprintf("owner=%s", cli.Owner),
 		"-F", fmt.Sprintf("repo=%s", cli.Repo),
@@ -83,7 +83,7 @@ func (cli *Cli) DeleteLabel(name string) error {
 
 func (cli *Cli) UpdateLabel(label EditLabel) (bytes.Buffer, error) {
 	args := []string{
-		fmt.Sprintf("/repos/:owner/:repo/labels/%s", label.Name),
+		fmt.Sprintf("/repos/{owner}/{repo}/labels/%s", label.Name),
 		"-X", "PATCH",
 		"-F", fmt.Sprintf("owner=%s", cli.Owner),
 		"-F", fmt.Sprintf("repo=%s", cli.Repo),

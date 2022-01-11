@@ -47,8 +47,8 @@ func (opts *GlobalOptions) parseRepoOverride(repoOverride string) error {
 	}
 
 	if len(repoOverride) == 0 {
-		opts.owner = ":owner"
-		opts.repo = ":repo"
+		opts.owner = "{owner}"
+		opts.repo = "{repo}"
 		return nil
 	}
 

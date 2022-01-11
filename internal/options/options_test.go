@@ -33,8 +33,8 @@ func Test_parseRepoOverride(t *testing.T) {
 		{
 			name: "empty",
 			want: want{
-				owner: ":owner",
-				repo:  ":repo",
+				owner: "{owner}",
+				repo:  "{repo}",
 			},
 		},
 		{
