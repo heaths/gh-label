@@ -52,7 +52,7 @@ func (label *Label) strings() []string {
 	}
 }
 
-func (label *Labels) headers() []string {
+func (labels *Labels) headers() []string {
 	return []string{
 		"name",
 		"color",
@@ -72,7 +72,9 @@ func (labels *Labels) strings() [][]string {
 func (labels *Labels) Write(format OutputFormat, w io.Writer) error {
 	if format == CSV {
 		csv := csv.NewWriter(w)
-		csv.Write(labels.headers())
+		if err := csv.Write(labels.headers()); err != nil {
+			return err
+		}
 		return csv.WriteAll(labels.strings())
 	}
 	if format == JSON {
