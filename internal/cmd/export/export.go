@@ -29,7 +29,7 @@ func ExportCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 	opts = &exportOptions{}
 	cmd := &cobra.Command{
 		Use:   "export <path>",
-		Short: `Export labels from the repository to <path>, or stdout if <path> is "-"`,
+		Short: `Export labels from the repository to <path>, or stdout if <path> is "-".`,
 		Example: heredoc.Doc(`
 			$ gh label export ./labels.csv
 			$ gh label export ./labels.json
