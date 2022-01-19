@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 )
 
 type Label struct {
@@ -16,12 +17,31 @@ type Label struct {
 
 type Labels []Label
 
-type OutputFormat int
+type OutputFormat string
 
 const (
-	CSV OutputFormat = iota
-	JSON
+	CSV  OutputFormat = "csv"
+	JSON OutputFormat = "json"
 )
+
+func SupportedOutputFormat(format string) (string, error) {
+	format = strings.TrimPrefix(format, ".")
+	format = strings.ToLower(format)
+	formats := OutputFormats()
+
+	for _, str := range formats {
+		if str == format {
+			return format, nil
+		}
+	}
+
+	return "", fmt.Errorf("unsupported format %q, expected %v", format, formats)
+}
+
+func OutputFormats() []string {
+	// These must remain sorted.
+	return []string{"csv", "json"}
+}
 
 func (label *Label) strings() []string {
 	return []string{

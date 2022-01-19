@@ -8,6 +8,70 @@ import (
 	"github.com/MakeNowJust/heredoc"
 )
 
+func TestSupportedOutputFormats(t *testing.T) {
+	tests := []struct {
+		name  string
+		want  string
+		wantE bool
+	}{
+		{
+			name: "csv",
+			want: "csv",
+		},
+		{
+			name: "CSV",
+			want: "csv",
+		},
+		{
+			name: ".csv",
+			want: "csv",
+		},
+		{
+			name: "json",
+			want: "json",
+		},
+		{
+			name: "JSON",
+			want: "json",
+		},
+		{
+			name: ".json",
+			want: "json",
+		},
+		{
+			name:  "unknown",
+			wantE: true,
+		},
+		{
+			name:  "",
+			wantE: true,
+		},
+		{
+			name:  "a",
+			wantE: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got, err := SupportedOutputFormat(tt.name); (err != nil) != tt.wantE {
+				t.Errorf("SupportedOutputFormat() error = %v, expected error %v", err, tt.wantE)
+			} else if got != tt.want {
+				t.Errorf("SupportedOutputFormat() = %v, expected %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOutputFormats(t *testing.T) {
+	got := OutputFormats()
+	want := []string{"csv", "json"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("OutputFormats() = %v, expected %v", got, want)
+	}
+}
+
 func TestLabel_strings(t *testing.T) {
 	label := Label{
 		Name:        "test",
@@ -25,7 +89,7 @@ func TestLabel_strings(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("Strings() = %v, want: %v", got, want)
+		t.Errorf("Strings() = %v, expected %v", got, want)
 	}
 }
 
@@ -62,7 +126,7 @@ func TestLabels_strings(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("Strings() = %v, want: %v", got, want)
+		t.Errorf("Strings() = %v, expected %v", got, want)
 	}
 }
 
@@ -116,7 +180,7 @@ func TestLabels_write(t *testing.T) {
 		},
 		{
 			name:   "unknown",
-			format: 99,
+			format: "unknown",
 			wantE:  true,
 		},
 	}
@@ -125,9 +189,9 @@ func TestLabels_write(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			bytes := &bytes.Buffer{}
 			if err := labels.Write(tt.format, bytes); (err != nil) != tt.wantE {
-				t.Errorf("Write() error = %v, expected error", err)
+				t.Errorf("Write() error = %v, expected error %v", err, tt.wantE)
 			} else if bytes.String() != tt.want {
-				t.Errorf("Write() = %v, want: %v", bytes.String(), tt.want)
+				t.Errorf("Write() = %v, expected %v", bytes.String(), tt.want)
 			}
 		})
 	}
