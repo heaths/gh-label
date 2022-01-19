@@ -35,6 +35,14 @@ gh label create p1 --color e00808
 gh label create p2 --color "#ffa501" --description "Affects more than a few users"
 ```
 
+### delete
+
+Delete a label from a repository.
+
+```bash
+gh label delete p1
+```
+
 ### edit
 
 Edit a label in a repository.
@@ -45,12 +53,14 @@ gh label edit general --new-name feedback
 gh label edit feedback --color c046ff --description "User feedback"
 ```
 
-### delete
+### export
 
-Delete a label from a repository.
+Export labels from the repository to <path>, or stdout if <path> is "-".
 
 ```bash
-gh label delete p1
+gh label export ./labels.csv
+gh label export ./labels.json
+gh label export --format csv -
 ```
 
 ### list
