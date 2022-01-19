@@ -22,7 +22,7 @@ type exportOptions struct {
 	io     *iostreams.IOStreams
 }
 
-// Make available for testing.
+// opts are export options available for testing.
 var opts *exportOptions
 
 func ExportCmd(globalOpts *options.GlobalOptions) *cobra.Command {
