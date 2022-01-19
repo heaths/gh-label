@@ -6,19 +6,10 @@ import (
 	"fmt"
 )
 
-type Label struct {
-	Name        string `json:"name"`
-	Color       string `json:"color"`
-	Description string `json:"description,omitempty"`
-	URL         string `json:"url,omitempty"`
-}
-
 type EditLabel struct {
 	Label
 	NewName string `json:"new_name,omitempty"`
 }
-
-type Labels []Label
 
 type Client struct {
 	labels LabelsService
