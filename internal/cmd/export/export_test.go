@@ -151,6 +151,7 @@ func Test_export(t *testing.T) {
 	type args struct {
 		format string
 		stdout string
+		tty    bool
 	}
 
 	tests := []struct {
@@ -184,6 +185,38 @@ func Test_export(t *testing.T) {
 						}
 					}
 				}`,
+			},
+			wantW: heredoc.Doc(`name,color,description,url
+			bug,d73a4a,Something isn't working,https://github.com/heaths/gh-label/issues/1
+			documentation,0075ca,Improvements or additions to documentation,
+			`),
+		},
+		{
+			name: "csv (tty)",
+			args: args{
+				format: "csv",
+				stdout: `{
+					"data": {
+						"repository": {
+							"labels": {
+								"nodes": [
+									{
+										"name": "bug",
+										"color": "d73a4a",
+										"description": "Something isn't working",
+										"url": "https://github.com/heaths/gh-label/issues/1"
+									},
+									{
+										"name": "documentation",
+										"color": "0075ca",
+										"description": "Improvements or additions to documentation"
+									}
+								]
+							}
+						}
+					}
+				}`,
+				tty: true,
 			},
 			wantW: heredoc.Doc(`name,color,description,url
 			bug,d73a4a,Something isn't working,https://github.com/heaths/gh-label/issues/1
@@ -237,6 +270,7 @@ func Test_export(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up output streams.
 			io, _, stdout, _ := iostreams.Test()
+			io.SetStdoutTTY(tt.args.tty)
 
 			// Set up gh output.
 			mock := &github.Mock{
