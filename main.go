@@ -7,7 +7,7 @@ import (
 	"github.com/heaths/gh-label/internal/cmd/delete"
 	"github.com/heaths/gh-label/internal/cmd/edit"
 	"github.com/heaths/gh-label/internal/cmd/export"
-	_import "github.com/heaths/gh-label/internal/cmd/import"
+	importcmd "github.com/heaths/gh-label/internal/cmd/import"
 	"github.com/heaths/gh-label/internal/cmd/list"
 	"github.com/heaths/gh-label/internal/options"
 	"github.com/spf13/cobra"
@@ -27,7 +27,7 @@ func main() {
 	rootCmd.AddCommand(delete.DeleteCmd(opts))
 	rootCmd.AddCommand(edit.EditCmd(opts))
 	rootCmd.AddCommand(export.ExportCmd(opts))
-	rootCmd.AddCommand(_import.ImportCmd(opts))
+	rootCmd.AddCommand(importcmd.ImportCmd(opts))
 	rootCmd.AddCommand(list.ListCmd(opts))
 
 	if err := rootCmd.Execute(); err != nil {
