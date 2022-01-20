@@ -196,3 +196,43 @@ func TestLabels_write(t *testing.T) {
 		})
 	}
 }
+
+func TestReadLabel(t *testing.T) {
+	tests := []struct {
+		name  string
+		data  []string
+		want  Label
+		wantE bool
+	}{
+		{
+			name:  "too few fields",
+			data:  []string{"1", "2", "3"},
+			wantE: true,
+		},
+		{
+			name:  "too many fields",
+			data:  []string{"1", "2", "3", "4", "right out"},
+			wantE: true,
+		},
+		{
+			name: "just right",
+			data: []string{"1", "2", "3", "4"},
+			want: Label{
+				Name:        "1",
+				Color:       "2",
+				Description: "3",
+				URL:         "4",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got, err := readLabel(tt.data); (err != nil) != tt.wantE {
+				t.Errorf("readLabel() error = %v, expected %v", err, tt.wantE)
+			} else if got != nil && !reflect.DeepEqual(*got, tt.want) {
+				t.Errorf("readLabel() = %v, expected %v", *got, tt.want)
+			}
+		})
+	}
+}

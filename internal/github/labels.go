@@ -6,7 +6,11 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/heaths/gh-label/internal/utils"
 )
+
+const labelFields = 4
 
 type Label struct {
 	Name        string `json:"name"`
@@ -83,4 +87,65 @@ func (labels *Labels) Write(format OutputFormat, w io.Writer) error {
 		return json.Encode(*labels)
 	}
 	return fmt.Errorf("unknown format %v", format)
+}
+
+func ReadLabels(format OutputFormat, r io.Reader) (Labels, error) {
+	// Start with capacity for 10 labels. A new repo currently starts with 9.
+	labels := make(Labels, 0, 10)
+
+	if format == CSV {
+		csv := csv.NewReader(r)
+		csv.FieldsPerRecord = labelFields
+		csv.ReuseRecord = true
+		csv.TrimLeadingSpace = true
+
+		for {
+			record, err := csv.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return nil, err
+			}
+
+			if utils.AreEqualStrings(record, labels.headers()) {
+				continue
+			}
+
+			label, err := readLabel(record)
+			if err != nil {
+				return nil, err
+			}
+
+			labels = append(labels, *label)
+		}
+
+		return labels, nil
+	}
+
+	if format == JSON {
+		json := json.NewDecoder(r)
+		if err := json.Decode(&labels); err != nil {
+			return nil, err
+		}
+
+		return labels, nil
+	}
+
+	return nil, fmt.Errorf("unknown format %v", format)
+}
+
+func readLabel(record []string) (*Label, error) {
+	if len(record) != labelFields {
+		return nil, fmt.Errorf("expected %d label fields, got %d", labelFields, len(record))
+	}
+
+	label := &Label{
+		record[0],
+		record[1],
+		record[2],
+		record[3],
+	}
+
+	return label, nil
 }
