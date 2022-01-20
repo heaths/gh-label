@@ -22,7 +22,7 @@ type exportOptions struct {
 	io     *iostreams.IOStreams
 }
 
-// Make available for testing.
+// opts are export options available for testing.
 var opts *exportOptions
 
 func ExportCmd(globalOpts *options.GlobalOptions) *cobra.Command {
@@ -103,5 +103,13 @@ func export(globalOpts *options.GlobalOptions, opts *exportOptions) error {
 		}
 	}
 
-	return labels.Write(github.OutputFormat(opts.format), w)
+	if err := labels.Write(github.OutputFormat(opts.format), w); err != nil {
+		return err
+	}
+
+	if opts.path != "-" && opts.io.IsStdoutTTY() {
+		fmt.Fprintf(opts.io.Out, "Exported %d labels to %q\n", len(labels), opts.path)
+	}
+
+	return nil
 }
