@@ -63,6 +63,16 @@ gh label export ./labels.json
 gh label export --format csv -
 ```
 
+### import
+
+Import labels into the repository from <path>, or stdin if <path> is "-".
+
+```bash
+gh label import ./labels.csv
+gh label import ./labels.json
+gh label import --format csv -
+```
+
 ### list
 
 List labels in a repository.

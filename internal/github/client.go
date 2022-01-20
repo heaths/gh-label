@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 type EditLabel struct {
@@ -47,6 +48,18 @@ func (c *Client) CreateLabel(label Label) (Label, error) {
 	}
 
 	return label, nil
+}
+
+func (c *Client) CreateOrUpdateLabel(label Label) (Label, error) {
+	l, err := c.CreateLabel(label)
+	if err != nil {
+		if strings.Contains(err.Error(), "422") {
+			return c.UpdateLabel(EditLabel{label, ""})
+		}
+		return Label{}, err
+	}
+
+	return l, nil
 }
 
 func (c *Client) DeleteLabel(name string) error {

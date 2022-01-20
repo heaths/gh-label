@@ -67,7 +67,7 @@ func ExportCmd(globalOpts *options.GlobalOptions) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.format, "format", "", "", fmt.Sprintf("Format of the input to parse. One of %v. The default is the file extension.", github.OutputFormats()))
+	cmd.Flags().StringVarP(&opts.format, "format", "", "", fmt.Sprintf("Format of the file to export. One of %v. The default is the file extension.", github.OutputFormats()))
 
 	return cmd
 }

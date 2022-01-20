@@ -130,17 +130,17 @@ func Test_ExportCmd(t *testing.T) {
 			opts.client = github.New(mock)
 
 			if err := cmd.Execute(); !strings.Contains(err.Error(), "mock") && (err != nil) != tt.wantE {
-				t.Error("ImportCmd().Execute() expected error")
+				t.Error("ExportCmd().Execute() expected error")
 				return
 			}
 
 			if opts.path != tt.want.path {
-				t.Errorf("ImportCmd() path = %q, expected %q", opts.path, tt.want.path)
+				t.Errorf("ExportCmd() path = %q, expected %q", opts.path, tt.want.path)
 				return
 			}
 
 			if opts.format != tt.want.format {
-				t.Errorf("ImportCmd() format = %q, expected %q", opts.format, tt.want.format)
+				t.Errorf("ExportCmd() format = %q, expected %q", opts.format, tt.want.format)
 				return
 			}
 		})
